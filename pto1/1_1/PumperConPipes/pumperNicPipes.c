@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <pthread.h>
+#include <fcntl.h>
 
 #define EXT_LECTURA 0
 #define EXT_ESCRITURA 1
@@ -34,7 +35,7 @@ int fdVeganoOrden[2]; //Pipes para comunicacion entre empleado vegano y despacha
 int fdPapasOrden[2]; //Pipes para comunicacion entre empleado de papas y despachador
 
 //Pipes para comunicacion entre despachador y cliente
-int fdOrdenCliente[2];
+int fdOrdenCliente[2], fdOrdenClienteVIP[2];
 int fdEsperaHamburguesa[2], fdEsperaVegano[2], fdEsperaPapas[2];
 
 int main(int argc, char *argv[]){
@@ -50,7 +51,8 @@ int main(int argc, char *argv[]){
 
     //Pipes con clientes
     pipe(fdOrdenCliente);
-    
+    pipe(fdOrdenClienteVIP);
+
     pipe(fdEsperaHamburguesa);
     pipe(fdEsperaVegano);
     pipe(fdEsperaPapas);
@@ -80,7 +82,7 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < 5; i++)
     {
         if(fork() == 0)//Creamos clientes
         {
@@ -98,6 +100,7 @@ int main(int argc, char *argv[]){
     close(fdPapasOrden[EXT_LECTURA]);
 
     close(fdOrdenCliente[EXT_ESCRITURA]);
+    close(fdOrdenClienteVIP[EXT_ESCRITURA]);
 
     close(fdEsperaHamburguesa[EXT_LECTURA]);
     close(fdEsperaVegano[EXT_LECTURA]);
@@ -135,33 +138,38 @@ void* atender(void* arg)
 
     while(1)
     {
-
+        int rturn;
+        rturn = 0;
+        fcntl(fdOrdenClienteVIP[EXT_LECTURA], F_SETFL, O_NONBLOCK);//Hace que el read no bloquee el proceso si no hay nada que leer en los VIPS
+        int i;
         //Toma pedidos de los clientes:
-        if(read(fdOrdenCliente[EXT_LECTURA], &ordenCliente, SIZEORDEN) != 0){
-            printf("Dispacher recibido, |H: %d|V: %d|P: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas);
+        if((i = read(fdOrdenClienteVIP[EXT_LECTURA], &ordenCliente, SIZEORDEN)) != -1);
+        else
+            if((i =read(fdOrdenCliente[EXT_LECTURA], &ordenCliente, SIZEORDEN)) != -1);
+        if(i > 0)
+        {
+            printf("\033[4;37mDispacher recibido\033[0m, |H: %d|V: %d|P: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas);
             //Determina de que tipo es el pedido y lo envia al empleado correspondiente
-            if(ordenCliente.hamburguesa == 1)
+            if(ordenCliente.hamburguesa != 0)
             {
-                printf("D-> Leo hamburguesa\n");
-                printf("D-> Avisa a empleadoH\n");
+                printf("\033[4;37mDispacher\033[0m-> Avisa a empleadoH\n");
                 write(fdHamburguesaOrden[EXT_ESCRITURA], &ordenCliente.hamburguesa, SIZECONFIRMACION);
                 sleep(1);
             }
-            if(ordenCliente.vegano == 1)
+            if(ordenCliente.vegano != 0)
             {
-                printf("D-> Leo Vegano\n");
                 write(fdVeganoOrden[EXT_ESCRITURA], &ordenCliente.vegano, SIZECONFIRMACION);
-                printf("D-> Avisa a empleadoV\n");
+                printf("\033[4;37mDispacher\033[0m-> Avisa a empleadoV\n");
                 sleep(1);
             }
-            if(ordenCliente.papas == 1)
+            if(ordenCliente.papas != 0)
             {
-                printf("D-> Leo Papas\n");
+                printf("\033[4;37mDispacher\033[0m-> Avisa a empleadoP\n");
                 write(fdPapasOrden[EXT_ESCRITURA], &ordenCliente.papas, SIZECONFIRMACION);
-                printf("D-> Avisa a empleadoP\n");
                 sleep(1);
             }
         }
+        
     }
 }
 
@@ -181,6 +189,8 @@ void cliente()
 
     //Propios
     close(fdOrdenCliente[EXT_LECTURA]);
+    close(fdOrdenClienteVIP[EXT_LECTURA]);
+
     close(fdEsperaHamburguesa[EXT_ESCRITURA]);
     close(fdEsperaVegano[EXT_ESCRITURA]);
     close(fdEsperaPapas[EXT_ESCRITURA]);
@@ -190,6 +200,11 @@ void cliente()
 
     //while(1){
         srand(time(NULL));
+        int vip;
+        vip = 0;
+
+        if(rand() % 2 == 0 && rand() % 3 == 0)
+            vip = 1;
 
         ordenCliente.hamburguesa = 0;
         ordenCliente.vegano = 0;
@@ -201,16 +216,42 @@ void cliente()
             ordenCliente.vegano = 1;
         if(rand() % 2 == 0)
             ordenCliente.papas = 1;
+        if(ordenCliente.hamburguesa == 0 && ordenCliente.vegano == 0 && ordenCliente.papas == 0)
+            ordenCliente.hamburguesa = 1;//Si no pidio nada, pide hamburguesa
 
-        printf("Cliente: |H: %d|V: %d|P: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas);
-        //Envio orden al despachador 
-        write(fdOrdenCliente[EXT_ESCRITURA], &ordenCliente, SIZEORDEN);
-        printf("Cliente envia su pedido a dispacher\n");
-
-
-
-        //ESPERA A QUE SE DESPACHE SU PEDIDO
-        sleep(4);
+        if(vip)
+        {
+            //Envio orden al despachador 
+            printf("\033[31mClienteVIP:\033[0m |H: %d|V: %d|P: %d, pid: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas, getpid());
+            write(fdOrdenClienteVIP[EXT_ESCRITURA], &ordenCliente, SIZEORDEN);
+            printf("\033[31mClienteVIP\033[0m envia su pedido a dispacher\n");
+            sleep(1);
+        }else
+        {
+            //Envio orden al despachador 
+            printf("\033[31mCliente:\033[0m |H: %d|V: %d|P: %d, pid: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas, getpid());
+            write(fdOrdenCliente[EXT_ESCRITURA], &ordenCliente, SIZEORDEN);
+            printf("\033[31mCliente\033[0m envia su pedido a dispacher\n");
+            sleep(1);
+        }
+        //Me pongo a esperar por lo que pedi:
+        if(ordenCliente.hamburguesa != 0)
+        {
+            read(fdEsperaHamburguesa[EXT_LECTURA], &ordenCliente.hamburguesa, SIZECONFIRMACION);
+            printf("\033[31mCliente\033[0m recibe hamburguesa, pid: %d\n", getpid());
+        }
+        if(ordenCliente.vegano != 0)
+        {
+            read(fdEsperaVegano[EXT_LECTURA], &ordenCliente.vegano, SIZECONFIRMACION);
+            printf("\033[31mCliente\033[0m recibe vegano, pid: %d\n", getpid());
+        }
+        if(ordenCliente.papas != 0)
+        {
+            read(fdEsperaPapas[EXT_LECTURA], &ordenCliente.papas, SIZECONFIRMACION);
+            printf("\033[31mCliente\033[0m recibe papas, pid: %d\n", getpid());
+        }
+        sleep(1);
+        printf("\033[32mCliente termina, pid: %d\033[0m\n", getpid());
 
     //}
     exit(1);
@@ -223,31 +264,32 @@ void empleadoHamburguesas()
     //Externos
     close(fdOrdenCliente[EXT_ESCRITURA]);
     close(fdOrdenCliente[EXT_LECTURA]);
+    close(fdOrdenClienteVIP[EXT_ESCRITURA]);
+    close(fdOrdenClienteVIP[EXT_LECTURA]);
 
     close(fdVeganoOrden[EXT_ESCRITURA]);
     close(fdVeganoOrden[EXT_LECTURA]);
+    close(fdEsperaVegano[EXT_ESCRITURA]);
+    close(fdEsperaVegano[EXT_LECTURA]);
 
     close(fdPapasOrden[EXT_ESCRITURA]);
     close(fdPapasOrden[EXT_LECTURA]);
-
-    close(fdEsperaHamburguesa[EXT_LECTURA]);
-    close(fdEsperaVegano[EXT_LECTURA]);
-    close(fdEsperaPapas[EXT_LECTURA]);
-    close(fdEsperaHamburguesa[EXT_ESCRITURA]);
     close(fdEsperaPapas[EXT_ESCRITURA]);
-    close(fdEsperaVegano[EXT_ESCRITURA]);
-
+    close(fdEsperaPapas[EXT_LECTURA]);
 
     //Propios
     close(fdHamburguesaOrden[EXT_ESCRITURA]);
+    close(fdEsperaHamburguesa[EXT_LECTURA]);
 
     int confirmacion = 0;
     while(1)
     {
         //Espero orden de hamburguesas
         read(fdHamburguesaOrden[EXT_LECTURA], &confirmacion, SIZECONFIRMACION);
-        printf("EmpleadoH prepara Hamburguesa\n");
+        printf("\033[36mEmpleadoH\033[0m-> prepara Hamburguesa\n");
         sleep(1);
+        printf("\033[36mEmpleadoH\033[0m-> termina hamburguesa\n");
+        write(fdEsperaHamburguesa[EXT_ESCRITURA], &confirmacion, SIZECONFIRMACION);
     }
     exit(1);
 }
@@ -261,26 +303,26 @@ void empleadoVegano()
 
     close(fdHamburguesaOrden[EXT_ESCRITURA]);
     close(fdHamburguesaOrden[EXT_LECTURA]);
+    close(fdEsperaHamburguesa[EXT_ESCRITURA]);
+    close(fdEsperaHamburguesa[EXT_LECTURA]);
 
     close(fdPapasOrden[EXT_ESCRITURA]);
     close(fdPapasOrden[EXT_LECTURA]);
-
-    close(fdEsperaHamburguesa[EXT_LECTURA]);
-    close(fdEsperaVegano[EXT_LECTURA]);
-    close(fdEsperaPapas[EXT_LECTURA]);
-    close(fdEsperaHamburguesa[EXT_ESCRITURA]);
     close(fdEsperaPapas[EXT_ESCRITURA]);
-    close(fdEsperaVegano[EXT_ESCRITURA]);
+    close(fdEsperaPapas[EXT_LECTURA]);
 
     //Propios
     close(fdVeganoOrden[EXT_ESCRITURA]);
+    close(fdEsperaVegano[EXT_LECTURA]);
 
     int confirmacion = 0;
     while(1)
     {
         read(fdVeganoOrden[EXT_LECTURA], &confirmacion, SIZECONFIRMACION);
-        printf("EmpleadoV prepara vegano\n");
+        printf("\033[35mEmpleadoV\033[0m-> prepara vegano\n");
         sleep(1);
+        printf("\033[35mEmpleadoV\033[0m-> termina vegano\n");
+        write(fdEsperaVegano[EXT_ESCRITURA], &confirmacion, SIZECONFIRMACION);
     }
     exit(1);
 }
@@ -291,23 +333,31 @@ void* empleadosPapas(void* arg)
     //Externos
     close(fdOrdenCliente[EXT_ESCRITURA]);
     close(fdOrdenCliente[EXT_LECTURA]);
+    close(fdOrdenClienteVIP[EXT_ESCRITURA]);
+    close(fdOrdenClienteVIP[EXT_LECTURA]);
 
     close(fdVeganoOrden[EXT_ESCRITURA]);
     close(fdVeganoOrden[EXT_LECTURA]);
+    close(fdEsperaVegano[EXT_ESCRITURA]);
+    close(fdEsperaVegano[EXT_LECTURA]);
 
     close(fdHamburguesaOrden[EXT_ESCRITURA]);
     close(fdHamburguesaOrden[EXT_LECTURA]);
+    close(fdEsperaHamburguesa[EXT_ESCRITURA]);
+    close(fdEsperaHamburguesa[EXT_LECTURA]);
 
     //Propios
     close(fdPapasOrden[EXT_ESCRITURA]);
+    close(fdEsperaPapas[EXT_LECTURA]);
 
     int confirmacion = 0;
 
     while(1)
     {
         read(fdPapasOrden[EXT_LECTURA], &confirmacion, SIZECONFIRMACION);
-        printf("EmpleadoP prepara papas\n");
+        printf("\033[33mEmpleadoP\033[0m-> prepara papas\n");
         sleep(1);
-
+        printf("\033[33mEmpleadoP\033[0m-> termina papas\n");
+        write(fdEsperaPapas[EXT_ESCRITURA], &confirmacion, SIZECONFIRMACION);
     }
 }
