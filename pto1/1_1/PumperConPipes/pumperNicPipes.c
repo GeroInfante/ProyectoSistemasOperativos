@@ -82,7 +82,7 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
-    for(int i = 0; i < 5; i++)
+    for(int i = 0; i < 4; i++)
     {
         if(fork() == 0)//Creamos clientes
         {
