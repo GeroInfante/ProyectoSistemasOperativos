@@ -17,13 +17,13 @@
 void empleadoHamburguesas();
 void empleadoVegano();
 void cliente();
+void atender();
 
 //Hilos
 void* empleadosPapas(void* arg);
-void* atender(void* arg);
 
 struct orden
-{//Cuando cliente quiere alguna de estas pone su valor en 1, si no en 0
+{
     int hamburguesa;
     int vegano;
     int papas;
@@ -110,14 +110,8 @@ int main(int argc, char *argv[]){
     close(fdEsperaVegano[EXT_ESCRITURA]);
     close(fdEsperaPapas[EXT_ESCRITURA]);
 
-    //Creo hilos para manejar la atencion de los clientes
-    pthread_t hiloAtencion, hiloDespachador;
-
-    pthread_create(&hiloAtencion, NULL, atender, NULL);
-    //pthread_create(&hiloDespachador, NULL, despachar, NULL);
-
-    pthread_join(hiloAtencion, NULL);
-    //pthread_join(hiloDespachador, NULL);
+    //Se va a atender a los clientes:
+    atender();
 
     
     for(int i = 0; i < 7; i++)
@@ -129,7 +123,7 @@ int main(int argc, char *argv[]){
 
 
 
-void* atender(void* arg)
+void atender()
 {
     struct orden ordenCliente;
     ordenCliente.hamburguesa = 0;

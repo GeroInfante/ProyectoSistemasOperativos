@@ -1,5 +1,2 @@
 .vscode/*
-/*
-!/.c
-!/.h
-/bin/
+*main
