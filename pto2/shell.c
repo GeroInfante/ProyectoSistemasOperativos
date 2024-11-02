@@ -8,16 +8,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-// Cambiar permisos de un archivo
-void cambiar_permisos(const char *nombre, int permisos) {
-    if (chmod(nombre, permisos) == -1) { 
-        perror("Error al cambiar permisos");
-    } else {
-        printf("Permisos de '%s' modificados con éxito\n", nombre);
-    }
-}
-
-// Función principal del mini shell
 int main() {
     char comando[256];
 
@@ -77,12 +67,16 @@ int main() {
         } else
         if (strcmp(comando, "chmod") == 0) {
             char nombre[256];
-            int permisos;
-            scanf("%s %o", nombre, &permisos);
-            char* argv[] = {"chmod", nombre, (char*)permisos,NULL};
+            char permisos[256];
+            scanf("%s %s", nombre, permisos);
+            char* argv[] = {"chmod", nombre, permisos,NULL};
+
             if(fork() == 0){
-                execv("chmod", argv);
-                exit(1);
+                if(execv("chmod", argv) == -1)
+                {
+                    printf("Error al cambiar permisos\n");
+                    exit(1);
+                }
             }
         } else {
             printf("Comando no reconocido. Escriba 'ayuda' para ver los comandos disponibles.\n");
