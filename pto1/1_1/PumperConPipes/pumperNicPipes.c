@@ -19,8 +19,7 @@ void empleadoVegano();
 void cliente();
 void atender();
 
-//Hilos
-void* empleadosPapas(void* arg);
+void empleadosPapas();
 
 struct orden
 {
@@ -71,18 +70,16 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
-    if(fork() == 0)//Creamos empleados encargado de las papas
+    for(int i = 0; i < 2; i++)//Creamos empleados encargados de las papas
     {
-        pthread_t hiloPapas[2];
-        pthread_create(&hiloPapas[0], NULL, empleadosPapas, NULL);
-        pthread_create(&hiloPapas[1], NULL, empleadosPapas, NULL);
-        
-        pthread_join(hiloPapas[0], NULL);
-        pthread_join(hiloPapas[1], NULL);
-        exit(1);
+        if(fork() == 0)
+        {
+            empleadosPapas();
+            exit(1);
+        }   
     }
 
-    for(int i = 0; i < 5; i++)
+    for(int i = 0; i < 4; i++)
     {
         if(fork() == 0)//Creamos clientes
         {
@@ -347,7 +344,7 @@ void empleadoVegano()
     exit(1);
 }
 
-void* empleadosPapas(void* arg)
+void empleadosPapas()
 {
     //Cerramos pipes que no son utilizados
     //Externos
