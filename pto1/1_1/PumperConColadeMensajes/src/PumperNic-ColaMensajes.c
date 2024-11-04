@@ -15,9 +15,15 @@ int main()
 		return 1;
 	}
 
+    //Determinamos el numero maximo de clientes en cola de espera antes de que se vaya un cliente es 10:
+    msj.tipo = COLAESPERA;
+    for(int i = 0; i < 10; i++)
+    {
+        msgsnd(msqid, &msj, SIZEORDEN, 0);
+    }
     //Creo procesos clientes y empleados:
 
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 12; i++)
     {
         if(fork() == 0)
         {

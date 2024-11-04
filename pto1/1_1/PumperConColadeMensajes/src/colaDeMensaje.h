@@ -12,6 +12,7 @@
 #define EMPLEADOHAMBURGUESA 3
 #define EMPLEADOVEGANO 4
 #define EMPLEADOPAPAS 5
+#define COLAESPERA 6
 
 
 struct orden

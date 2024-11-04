@@ -17,8 +17,14 @@ int main()
     while(1)
     {
         msgrcv(msqid, &ordenCliente, SIZEORDEN, ATENDERCONPRIORIDAD, 0);
-           
+
         printf("\033[4;37mDispacher recibido\033[0m, |H: %d|V: %d|P: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas);
+
+        //Libero espacio en la cola de espera
+        ordenCliente.tipo = COLAESPERA;
+        msgsnd(msqid, &ordenCliente, SIZEORDEN, 0); 
+
+        //Avisa a los empleados segun lo que pidio el cliente:
         if(ordenCliente.hamburguesa != 0)
         {
             for(int i = 0; i < ordenCliente.hamburguesa; i++)
