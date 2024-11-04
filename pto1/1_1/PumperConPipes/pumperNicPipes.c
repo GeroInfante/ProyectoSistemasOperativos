@@ -201,7 +201,7 @@ void cliente()
 
     struct orden ordenCliente;
 
-    //while(1){
+    while(1){
         srand(time(NULL));
         int vip;
 
@@ -210,63 +210,70 @@ void cliente()
         ordenCliente.papas = 0;
         vip = 0;
 
-        if(rand() % 2 == 0 && rand() % 3 == 0)
-            vip = 1;
-
-        //Maxima cantidad de cosas que puede pedir es 3 por tipo
-
-        ordenCliente.hamburguesa = rand() % 4;
-        ordenCliente.vegano = rand() % 4;
-        ordenCliente.papas = rand() % 4;
-
-        if(ordenCliente.hamburguesa == 0 && ordenCliente.vegano == 0 && ordenCliente.papas == 0)
-        {//Si no pidio nada, pide hamburguesa
-            ordenCliente.hamburguesa = 1;
-        }
-        if(vip)
+        if(rand() % 5 == rand() % 9 )
         {
-            //Envio orden al despachador 
-            printf("\033[31mClienteVIP:\033[0m |H: %d|V: %d|P: %d, pid: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas, getpid());
-            write(fdOrdenClienteVIP[EXT_ESCRITURA], &ordenCliente, SIZEORDEN);
-            printf("\033[31mClienteVIP\033[0m envia su pedido a dispacher\n");
+            printf("\033[32mCliente\033[0m-> se va, mucha gente en la cola de espera para pedir\n");
             sleep(1);
         }else
         {
-            //Envio orden al despachador 
-            printf("\033[31mCliente:\033[0m |H: %d|V: %d|P: %d, pid: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas, getpid());
-            write(fdOrdenCliente[EXT_ESCRITURA], &ordenCliente, SIZEORDEN);
-            printf("\033[31mCliente\033[0m envia su pedido a dispacher\n");
+            if(rand() % 2 == 0 && rand() % 3 == 0)
+                vip = 1;
+
+            //Maxima cantidad de cosas que puede pedir es 3 por tipo
+
+            ordenCliente.hamburguesa = rand() % 4;
+            ordenCliente.vegano = rand() % 4;
+            ordenCliente.papas = rand() % 4;
+
+            if(ordenCliente.hamburguesa == 0 && ordenCliente.vegano == 0 && ordenCliente.papas == 0)
+            {//Si no pidio nada, pide hamburguesa
+                ordenCliente.hamburguesa = 1;
+            }
+            if(vip)
+            {
+                //Envio orden al despachador 
+                printf("\033[31mClienteVIP:\033[0m |H: %d|V: %d|P: %d, pid: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas, getpid());
+                write(fdOrdenClienteVIP[EXT_ESCRITURA], &ordenCliente, SIZEORDEN);
+                printf("\033[31mClienteVIP\033[0m envia su pedido a dispacher\n");
+                sleep(1);
+            }else
+            {
+                //Envio orden al despachador 
+                printf("\033[31mCliente:\033[0m |H: %d|V: %d|P: %d, pid: %d\n", ordenCliente.hamburguesa, ordenCliente.vegano, ordenCliente.papas, getpid());
+                write(fdOrdenCliente[EXT_ESCRITURA], &ordenCliente, SIZEORDEN);
+                printf("\033[31mCliente\033[0m envia su pedido a dispacher\n");
+                sleep(1);
+            }
+            //Me pongo a esperar por lo que pedi:
+            if(ordenCliente.hamburguesa != 0)
+            {
+                for(int i = 0; i < ordenCliente.hamburguesa; i++)
+                {
+                    read(fdEsperaHamburguesa[EXT_LECTURA], &ordenCliente.hamburguesa, SIZECONFIRMACION);
+                    printf("\033[31mCliente\033[0m recibe hamburguesa, pid: %d\n", getpid());
+                }
+            }
+            if(ordenCliente.vegano != 0)
+            {
+                for(int i = 0; i < ordenCliente.vegano; i++)
+                {
+                    read(fdEsperaVegano[EXT_LECTURA], &ordenCliente.vegano, SIZECONFIRMACION);
+                    printf("\033[31mCliente\033[0m recibe vegano, pid: %d\n", getpid());
+                }
+            }
+            if(ordenCliente.papas != 0)
+            {
+                for(int i = 0; i < ordenCliente.papas; i++)
+                {
+                    read(fdEsperaPapas[EXT_LECTURA], &ordenCliente.papas, SIZECONFIRMACION);
+                    printf("\033[31mCliente\033[0m recibe papas, pid: %d\n", getpid());
+                }
+            }
+            printf("\033[32mCliente termina, pid: %d\033[0m\n", getpid());
             sleep(1);
         }
-        //Me pongo a esperar por lo que pedi:
-        if(ordenCliente.hamburguesa != 0)
-        {
-            for(int i = 0; i < ordenCliente.hamburguesa; i++)
-            {
-                read(fdEsperaHamburguesa[EXT_LECTURA], &ordenCliente.hamburguesa, SIZECONFIRMACION);
-                printf("\033[31mCliente\033[0m recibe hamburguesa, pid: %d\n", getpid());
-            }
-        }
-        if(ordenCliente.vegano != 0)
-        {
-            for(int i = 0; i < ordenCliente.vegano; i++)
-            {
-                read(fdEsperaVegano[EXT_LECTURA], &ordenCliente.vegano, SIZECONFIRMACION);
-                printf("\033[31mCliente\033[0m recibe vegano, pid: %d\n", getpid());
-            }
-        }
-        if(ordenCliente.papas != 0)
-        {
-            for(int i = 0; i < ordenCliente.papas; i++)
-            {
-                read(fdEsperaPapas[EXT_LECTURA], &ordenCliente.papas, SIZECONFIRMACION);
-                printf("\033[31mCliente\033[0m recibe papas, pid: %d\n", getpid());
-            }
-        }
-        sleep(1);
-        printf("\033[32mCliente termina, pid: %d\033[0m\n", getpid());
 
-    //}
+    }
     exit(1);
 }
 
