@@ -80,6 +80,7 @@ void* santa(void* arg)
 			{
 				sem_post(&santaReno);
 				printf("Renos atados: %d\n", i+1);
+				sleep(1);
 			}
 			for(int i = 0; i < 9; i++)
 			{
@@ -90,15 +91,15 @@ void* santa(void* arg)
 			for(int i = 0; i < 3; i++)
 			{
 				sem_post(&santaElfo);
-				printf("Elfos ayudados por santa: %d\n", i);
-				
+				printf("Elfos ayudados por santa: %d\n", i+1);
+				sleep(1);
 			}
 			for(int i = 0; i < 3; i++)
 			{
 				sem_post(&elfos);
 			}
 		}
-		printf("Santa se va a dormir");
+		printf("Santa se va a dormir\n");
 	}
 }
 
@@ -119,7 +120,7 @@ void* reno(void* arg)
 			sem_post(&renos);
 		}
 		pthread_mutex_unlock(&mutexReno);
-		printf("Reno volvio de vacaciones y espera a que lo ate santa\n");
+		printf("Reno espera a que lo ate santa\n");
 		sem_wait(&santaReno);
 		sleep(2);
 	}
