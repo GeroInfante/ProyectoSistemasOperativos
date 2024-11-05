@@ -8,7 +8,8 @@ sem_t hacerRueda, ruedaLista, chasisListo, pintar, terminada;
 void* ruedas(void* param);
 void* chasis(void* param);
 void* motor(void* param);
-void* pintor(void* param);
+void* pintorRojo(void* param);
+void* pintorVerde(void* param);
 void* extra(void* param);
 
 void main()
@@ -27,8 +28,8 @@ void main()
 	pthread_create(&tid[0], NULL, ruedas, NULL);
 	pthread_create(&tid[1], NULL, chasis, NULL);
 	pthread_create(&tid[2], NULL, motor, NULL);
-	pthread_create(&tid[3], NULL, pintor, NULL);
-	pthread_create(&tid[4], NULL, pintor, NULL);
+	pthread_create(&tid[3], NULL, pintorRojo, NULL);
+	pthread_create(&tid[4], NULL, pintorVerde, NULL);
 	pthread_create(&tid[5], NULL, extra, NULL);
 	
 	
@@ -72,12 +73,21 @@ void* motor(void* param)
 	}
 }
 
-void* pintor(void* param)
+void* pintorVerde(void* param)
 {
 	while(1)
 	{
 		sem_wait(&pintar);
-		printf("P");
+		printf("P_verde");
+		sem_post(&terminada);
+	}
+}
+void* pintorRojo(void* param)
+{
+	while(1)
+	{
+		sem_wait(&pintar);
+		printf("P_rojo");
 		sem_post(&terminada);
 	}
 }
