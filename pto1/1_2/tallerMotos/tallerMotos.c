@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-sem_t hacerRueda, ruedaLista, chasisListo, pintar, terminada;
+sem_t ruedaSem, chasisSem, motorSem, pintarSem, extraSem, secuenciaSem;
 
 void* ruedas(void* param);
 void* chasis(void* param);
@@ -15,11 +15,12 @@ void* extra(void* param);
 void main()
 {
 	//Inicializacion de semaforos:
-	sem_init(&hacerRueda, 0, 2);
-	sem_init(&ruedaLista, 0, 0);
-	sem_init(&chasisListo, 0, 0);
-	sem_init(&pintar, 0, 0);
-	sem_init(&terminada, 0, 0);
+	sem_init(&ruedaSem, 0, 2);
+	sem_init(&chasisSem, 0, 0);
+	sem_init(&motorSem, 0, 0);
+	sem_init(&pintarSem, 0, 0);
+	sem_init(&extraSem, 0, 0);
+	sem_init(&secuenciaSem, 0, 4);
 	
 	
 	
@@ -46,9 +47,10 @@ void* ruedas(void* param)
 {
 	while(1)
 	{
-		sem_wait(&hacerRueda);
+		sem_wait(&secuenciaSem);
+		sem_wait(&ruedaSem);
 		printf("R");
-		sem_post(&ruedaLista);
+		sem_post(&chasisSem);
 	}
 }
 
@@ -56,10 +58,10 @@ void* chasis(void* param)
 {
 	while(1)
 	{
-		sem_wait(&ruedaLista);
-		sem_wait(&ruedaLista);
+		sem_wait(&chasisSem);
+		sem_wait(&chasisSem);
 		printf("C");
-		sem_post(&chasisListo);
+		sem_post(&motorSem);
 	}
 }
 
@@ -67,9 +69,9 @@ void* motor(void* param)
 {
 	while(1)
 	{
-		sem_wait(&chasisListo);
+		sem_wait(&motorSem);
 		printf("M");
-		sem_post(&pintar);
+		sem_post(&pintarSem);
 	}
 }
 
@@ -77,18 +79,22 @@ void* pintorVerde(void* param)
 {
 	while(1)
 	{
-		sem_wait(&pintar);
+		sem_wait(&pintarSem);
 		printf("P_verde");
-		sem_post(&terminada);
+		sem_post(&extraSem);
+		sem_post(&ruedaSem);
+		sem_post(&ruedaSem);
 	}
 }
 void* pintorRojo(void* param)
 {
 	while(1)
 	{
-		sem_wait(&pintar);
+		sem_wait(&pintarSem);
 		printf("P_rojo");
-		sem_post(&terminada);
+		sem_post(&extraSem);
+		sem_post(&ruedaSem);
+		sem_post(&ruedaSem);
 	}
 }
 
@@ -96,12 +102,12 @@ void* extra(void* param)
 {
 	while(1)
 	{
-		sem_wait(&terminada);
-		sem_post(&hacerRueda);
-		sem_post(&hacerRueda);
-		sem_wait(&terminada);
+		sem_wait(&extraSem);
+		sem_wait(&extraSem);
 		printf("E ");
-		sem_post(&hacerRueda);
-		sem_post(&hacerRueda);
+		sem_post(&secuenciaSem);
+		sem_post(&secuenciaSem);
+		sem_post(&secuenciaSem);
+		sem_post(&secuenciaSem);
 	}
 }
