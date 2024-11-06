@@ -7,5 +7,4 @@ gcc PumperNic-ColaMensajes.c -o main
 gcc eliminadorCola.c -o rm
 
 echo "Compilación exitosa"
-echo "Ejecutando programa..."
-./main
+echo "Ejecutar el programa con ./main"
