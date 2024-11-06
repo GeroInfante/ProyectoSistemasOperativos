@@ -9,6 +9,18 @@ int main()
     printf("  crear_archivo <nombre>  - Crea un archivo vacío\n");
     printf("  ls                      - Lista el contenido del directorio actual\n");
     printf("  cat <nombre>            - Muestra el contenido de un archivo\n");
-    printf("  chmod <nombre> <permisos> - Cambia los permisos de un archivo:\n Permiso 0444 solo lectura\n Permiso 0644 solo lectura para otro usuario. Escritura, lectura y ejecucion para el usuario \n Permiso 0755 ejecucion y lectura para otros usuarios. Escritua, lectura y ejecucion para el usuario\n");
+    printf("  chmod <nombre> <permisos> - Cambia los permisos de un archivo: 0ABC, donde ABC es un número de 3 dígitos que representa los permisos en octal\n");
+    printf("                            - A -> Permisos para el propietario del archivo\n");
+    printf("                            - B -> Permisos para el grupo del archivo\n");
+    printf("                            - C -> Permisos para los demás\n");
+    printf("                            - Los valores pueden ser:\n");
+    printf("                                1 - Ejecución\n");
+    printf("                                2 - Escritura\n");
+    printf("                                3 - Escritura y ejecucion\n");
+    printf("                                4 - Lectura\n");
+    printf("                                5 - Lectura y ejecucion\n");
+    printf("                                6 - Lectura y escritura\n");
+    printf("                                7 - Lectura, escritura y ejecucion\n");
+
     return 0;
 }
